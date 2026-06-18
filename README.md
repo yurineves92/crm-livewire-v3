@@ -127,7 +127,7 @@ O seed cria **1.000 clientes**, **~3.500 deals** e **10.000 interações** para 
 |-----------------------------|:-----:|:-------:|:-----:|
 | Ver dados de toda a equipe  | ✅    | ✅      | ❌    |
 | Gerenciar usuários          | ✅    | ❌      | ❌    |
-| Exportar CSV                | ✅    | ✅      | ❌    |
+| Exportar CSV                | ✅    | ✅      | ⚠️ só os próprios |
 | Criar/editar clientes       | ✅    | ✅      | ✅    |
 | Excluir clientes            | ✅    | ✅      | ⚠️ só os próprios |
 | Excluir usuários            | ✅    | ❌      | ❌    |
