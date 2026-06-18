@@ -4,14 +4,14 @@ Sistema de CRM (Customer Relationship Management) desenvolvido com **Laravel** e
 
 ---
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-### 🔐 Autenticação
+### Autenticação
 - Login com e-mail e senha
 - Opção "Lembrar de mim"
 - Recuperação de senha
 
-### 📊 Dashboard
+### Dashboard
 - Visão geral de métricas em tempo real:
   - **Total de Clientes**
   - **Total de Negócios**
@@ -22,34 +22,34 @@ Sistema de CRM (Customer Relationship Management) desenvolvido com **Laravel** e
 - Gráfico de **Negócios por Estágio** (Prospecção, Proposta, Negociação, Ganho, Perdido)
 - Exportação de dados em **CSV** (Clientes e Negócios)
 
-### 👥 Gestão de Usuários *(Admin)*
+### Gestão de Usuários *(Admin)*
 - Criação, edição e exclusão de usuários
 - Busca por nome ou e-mail
 - Paginação
 - Perfis: **Admin**, **Manager**, **Sales**
 
-### 🤝 Clientes
+### Clientes
 - Cadastro, edição e exclusão de clientes
 - Busca por nome ou e-mail com paginação
 - Página de detalhes com Deals e Interações vinculadas
 
-### 💼 Deals (Negócios)
+### Deals (Negócios)
 - Criação de negócios vinculados ao cliente
 - Estágios: Prospecção, Proposta, Negociação, Ganho, Perdido
 - Valor em R$
 
-### 💬 Interações
+### Interações
 - Registro de interações por cliente
 - Histórico cronológico
 
-### 👤 Perfil
+### Perfil
 - Atualização de nome e e-mail
 - Alteração de senha
 - Exclusão de conta
 
 ---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 - **PHP 8.1+** / **Laravel**
 - **Livewire 4**
@@ -61,7 +61,7 @@ Sistema de CRM (Customer Relationship Management) desenvolvido com **Laravel** e
 
 ---
 
-## ⚙️ Instalação
+## Instalação
 
 ### Pré-requisitos
 - PHP >= 8.1 com extensões `pdo_sqlite` e `sqlite3` habilitadas
@@ -108,7 +108,7 @@ Acesse: http://localhost:8000
 
 ---
 
-## 👤 Credenciais Padrão
+## Credenciais Padrão
 
 | Nome          | E-mail          | Senha    | Perfil  |
 |---------------|-----------------|----------|---------|
@@ -121,7 +121,7 @@ O seed cria **1.000 clientes**, **~3.500 deals** e **10.000 interações** para 
 
 ---
 
-## 📁 Permissões por Perfil
+## Permissões por Perfil
 
 | Funcionalidade              | Admin | Manager | Sales |
 |-----------------------------|:-----:|:-------:|:-----:|
@@ -134,6 +134,6 @@ O seed cria **1.000 clientes**, **~3.500 deals** e **10.000 interações** para 
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto está sob a licença [MIT](LICENSE).
