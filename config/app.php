@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'CRMLivewire'),
+    'name' => env('APP_NAME', 'CRM Livewire'),
 
     /*
     |--------------------------------------------------------------------------
