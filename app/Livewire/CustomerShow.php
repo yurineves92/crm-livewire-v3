@@ -2,50 +2,63 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ScopesToUser;
 use App\Models\Customer;
 use App\Models\Deal;
 use App\Models\Interaction;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class CustomerShow extends Component
 {
+    use ScopesToUser;
+
     public Customer $customer;
 
-    // Negócio - Criar/Editar
+    // Negócio — criar/editar
     public ?int $editingDealId = null;
-
-    #[Validate('required|min:3')]
     public string $dealTitle = '';
-
-    #[Validate('required|numeric|min:0')]
     public string $dealValue = '';
-
-    #[Validate('required')]
-    public string $dealStage = 'prospecting';
+    public string $dealStage = Deal::STAGE_PROSPECTING;
 
     // Interação
-    #[Validate('required|min:3')]
     public string $note = '';
 
     public function mount(Customer $customer): void
     {
-        $user = auth()->user();
-
-        if ($user->role === 'sales' && $customer->user_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeOwnership($customer);
 
         $this->customer = $customer;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function rules(): array
+    {
+        return [
+            'dealTitle' => ['required', 'string', 'min:3', 'max:255'],
+            'dealValue' => ['required', 'numeric', 'min:0'],
+            'dealStage' => ['required', Rule::in(array_keys(Deal::STAGES))],
+            'note'      => ['required', 'string', 'min:3', 'max:1000'],
+        ];
+    }
+
+    /**
+     * Subconjunto das regras, já que a tela tem dois formulários independentes.
+     *
+     * @return array<string, mixed>
+     */
+    protected function rulesFor(string ...$keys): array
+    {
+        return array_intersect_key($this->rules(), array_flip($keys));
     }
 
     // ── Negócios ──────────────────────────────────────────
 
     public function addDeal(): void
     {
-        $this->validateOnly('dealTitle');
-        $this->validateOnly('dealValue');
-        $this->validateOnly('dealStage');
+        $this->validate($this->rulesFor('dealTitle', 'dealValue', 'dealStage'));
 
         Deal::create([
             'customer_id' => $this->customer->id,
@@ -55,68 +68,66 @@ class CustomerShow extends Component
             'stage'       => $this->dealStage,
         ]);
 
-        $this->reset('dealTitle', 'dealValue', 'dealStage');
+        $this->resetDealForm();
     }
 
     public function editDeal(int $id): void
     {
-        $deal = Deal::findOrFail($id);
-        $user = auth()->user();
+        $deal = $this->findDeal($id);
 
-        if ($user->role === 'sales' && $deal->user_id !== $user->id) {
-            abort(403);
-        }
-
-        $this->editingDealId = $id;
+        $this->editingDealId = $deal->id;
         $this->dealTitle     = $deal->title;
-        $this->dealValue     = $deal->value;
+        $this->dealValue     = (string) $deal->value;
         $this->dealStage     = $deal->stage;
     }
 
     public function updateDeal(): void
     {
-        $this->validateOnly('dealTitle');
-        $this->validateOnly('dealValue');
-        $this->validateOnly('dealStage');
+        $this->validate($this->rulesFor('dealTitle', 'dealValue', 'dealStage'));
 
-        $deal = Deal::findOrFail($this->editingDealId);
-        $user = auth()->user();
-
-        if ($user->role === 'sales' && $deal->user_id !== $user->id) {
-            abort(403);
-        }
-
-        $deal->update([
+        $this->findDeal($this->editingDealId)->update([
             'title' => $this->dealTitle,
             'value' => $this->dealValue,
             'stage' => $this->dealStage,
         ]);
 
-        $this->reset('dealTitle', 'dealValue', 'dealStage', 'editingDealId');
+        $this->resetDealForm();
     }
 
     public function cancelEditDeal(): void
     {
-        $this->reset('dealTitle', 'dealValue', 'dealStage', 'editingDealId');
+        $this->resetDealForm();
     }
 
     public function deleteDeal(int $id): void
     {
-        $deal = Deal::findOrFail($id);
-        $user = auth()->user();
+        $this->findDeal($id)->delete();
 
-        if ($user->role === 'sales' && $deal->user_id !== $user->id) {
-            abort(403);
+        if ($this->editingDealId === $id) {
+            $this->resetDealForm();
         }
+    }
 
-        $deal->delete();
+    private function findDeal(?int $id): Deal
+    {
+        $deal = Deal::where('customer_id', $this->customer->id)->findOrFail($id);
+
+        $this->authorizeOwnership($deal);
+
+        return $deal;
+    }
+
+    private function resetDealForm(): void
+    {
+        $this->reset('dealTitle', 'dealValue', 'dealStage', 'editingDealId');
+        $this->resetValidation();
     }
 
     // ── Interações ────────────────────────────────────────
 
     public function addInteraction(): void
     {
-        $this->validateOnly('note');
+        $this->validate($this->rulesFor('note'));
 
         Interaction::create([
             'customer_id' => $this->customer->id,
@@ -129,27 +140,24 @@ class CustomerShow extends Component
 
     public function deleteInteraction(int $id): void
     {
-        $interaction = Interaction::findOrFail($id);
-        $user = auth()->user();
+        $interaction = Interaction::where('customer_id', $this->customer->id)->findOrFail($id);
 
-        if ($user->role === 'sales' && $interaction->user_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeOwnership($interaction);
 
         $interaction->delete();
     }
 
     public function render()
     {
-        $user = auth()->user();
-
         return view('livewire.customer-show', [
-            'deals'        => Deal::where('customer_id', $this->customer->id)
-                ->when($user->role === 'sales', fn($q) => $q->where('user_id', $user->id))
-                ->latest()->get(),
-            'interactions' => Interaction::where('customer_id', $this->customer->id)
-                ->when($user->role === 'sales', fn($q) => $q->where('user_id', $user->id))
-                ->latest()->get(),
+            'deals' => $this->scoped(Deal::class)
+                ->where('customer_id', $this->customer->id)
+                ->latest()
+                ->get(),
+            'interactions' => $this->scoped(Interaction::class)
+                ->where('customer_id', $this->customer->id)
+                ->latest()
+                ->get(),
         ]);
     }
 }

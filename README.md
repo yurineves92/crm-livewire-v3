@@ -1,139 +1,157 @@
 # CRM Livewire
 
-Sistema de CRM (Customer Relationship Management) desenvolvido com **Laravel** e **Livewire**, voltado para gestão de clientes, negócios e equipes de vendas.
+MVP de CRM (clientes, negócios e interações) feito com **Laravel 13 + Livewire 3 + Tailwind CSS 3**, banco **SQLite** e autenticação do **Laravel Breeze**.
 
 ---
 
-## Funcionalidades
+## Stack
 
-### Autenticação
-- Login com e-mail e senha
-- Opção "Lembrar de mim"
-- Recuperação de senha
-
-### Dashboard
-- Visão geral de métricas em tempo real:
-  - **Total de Clientes**
-  - **Total de Negócios**
-  - **Pipeline Ativo** (valor em R$)
-  - **Fechados (Ganhos)** (valor em R$)
-- Filtro por período: Últimos 7 dias, 30 dias, 3 meses, 6 meses, 1 ano
-- Gráfico de **Receita Fechada — Últimos 12 Meses**
-- Gráfico de **Negócios por Estágio** (Prospecção, Proposta, Negociação, Ganho, Perdido)
-- Exportação de dados em **CSV** (Clientes e Negócios)
-
-### Gestão de Usuários *(Admin)*
-- Criação, edição e exclusão de usuários
-- Busca por nome ou e-mail
-- Paginação
-- Perfis: **Admin**, **Manager**, **Sales**
-
-### Clientes
-- Cadastro, edição e exclusão de clientes
-- Busca por nome ou e-mail com paginação
-- Página de detalhes com Deals e Interações vinculadas
-
-### Deals (Negócios)
-- Criação de negócios vinculados ao cliente
-- Estágios: Prospecção, Proposta, Negociação, Ganho, Perdido
-- Valor em R$
-
-### Interações
-- Registro de interações por cliente
-- Histórico cronológico
-
-### Perfil
-- Atualização de nome e e-mail
-- Alteração de senha
-- Exclusão de conta
-
----
-
-## Tecnologias
-
-- **PHP 8.1+** / **Laravel**
-- **Livewire 4**
-- **Livewire Volt** (formulários de perfil)
-- **Blade Templates**
-- **Tailwind CSS**
-- **Chart.js** (gráficos do dashboard)
-- **SQLite** (banco de dados)
+| Camada    | Tecnologia                                              |
+|-----------|---------------------------------------------------------|
+| Backend   | PHP 8.3, Laravel 13                                      |
+| UI        | Livewire 3 + Volt (telas de auth/perfil), Blade          |
+| Estilo    | Tailwind CSS 3 (+ `@tailwindcss/forms`), Vite 8          |
+| Gráficos  | Chart.js 4 (via `@assets` do Livewire)                   |
+| Banco     | SQLite                                                   |
+| Testes    | PHPUnit 12 (`php artisan test`)                          |
 
 ---
 
 ## Instalação
 
-### Pré-requisitos
-- PHP >= 8.1 com extensões `pdo_sqlite` e `sqlite3` habilitadas
-- Composer
-- Node.js & NPM
+Pré-requisitos: PHP >= 8.3 com `pdo_sqlite`, Composer e Node.js 20+.
 
-### Passos
+```bash
+composer install
+```
 
-1. Clone o repositório
+```bash
+cp .env.example .env && php artisan key:generate
+```
 
-   `git clone https://github.com/seu-usuario/crm-livewire.git`
-   `cd crm-livewire`
+```bash
+npm install && npm run build
+```
 
-2. Instale as dependências PHP
+```bash
+php artisan migrate:fresh --seed
+```
 
-   `composer install`
+```bash
+php artisan serve
+```
 
-3. Instale as dependências JS
+Acesse http://localhost:8000 (a raiz redireciona para `/dashboard`, que exige login).
 
-   `npm install && npm run build`
-
-4. Configure o ambiente
-
-   `cp .env.example .env`
-   `php artisan key:generate`
-
-5. Configure o `.env` para SQLite
-
-   `DB_CONNECTION=sqlite`
-
-6. Crie o arquivo do banco
-
-   `touch database/database.sqlite`
-
-7. Rode as migrations com seed
-
-   `php artisan migrate --seed`
-
-8. Inicie o servidor
-
-   `php artisan serve`
-
-Acesse: http://localhost:8000
+Para desenvolver com hot reload, use `npm run dev` em um terminal e `php artisan serve` em outro
+(ou `composer dev`, que sobe servidor + fila + logs + Vite juntos). Se as telas aparecerem sem
+estilo depois de encerrar o `npm run dev`, apague o arquivo `public/hot`.
 
 ---
 
-## Credenciais Padrão
+## Usuários do seed
 
-| Nome          | E-mail          | Senha    | Perfil  |
-|---------------|-----------------|----------|---------|
-| Admin Master  | admin@crm.com   | password | Admin   |
-| Gerente Silva | manager@crm.com | password | Manager |
-| Vendedor João | joao@crm.com    | password | Sales   |
-| Vendedora Ana | ana@crm.com     | password | Sales   |
+Todos com a senha `password`:
 
-O seed cria **1.000 clientes**, **~3.500 deals** e **10.000 interações** para testes.
+| Nome          | E-mail          | Perfil  |
+|---------------|-----------------|---------|
+| Admin Master  | admin@crm.com   | admin   |
+| Gerente Silva | manager@crm.com | manager |
+| Vendedor João | joao@crm.com    | sales   |
+| Vendedora Ana | ana@crm.com     | sales   |
 
 ---
 
-## Permissões por Perfil
+## Funcionalidades
 
-| Funcionalidade              | Admin | Manager | Sales |
-|-----------------------------|:-----:|:-------:|:-----:|
-| Ver dados de toda a equipe  | ✅    | ✅      | ❌    |
-| Gerenciar usuários          | ✅    | ❌      | ❌    |
-| Exportar CSV                | ✅    | ✅      | ⚠️ só os próprios |
-| Criar/editar clientes       | ✅    | ✅      | ✅    |
-| Excluir clientes            | ✅    | ✅      | ⚠️ só os próprios |
-| Excluir usuários            | ✅    | ❌      | ❌    |
+- **Dashboard** — KPIs (novos clientes, negócios, pipeline ativo e total ganho) com filtro de
+  período (7 dias a 1 ano), gráfico de receita fechada dos últimos 12 meses, distribuição por
+  estágio e exportação CSV de clientes e negócios.
+- **Clientes** — CRUD completo, busca por nome/e-mail/empresa com paginação e contagem de negócios.
+- **Negócios** — criação, edição e exclusão dentro da ficha do cliente, com estágios
+  `Prospecção → Proposta → Negociação → Ganho/Perdido`.
+- **Interações** — histórico cronológico de contatos por cliente.
+- **Usuários** *(admin)* — CRUD de usuários com perfis e busca.
+- **Perfil** — atualização de dados, troca de senha e exclusão da conta (Breeze/Volt).
+
+### Permissões
+
+A regra vive em `App\Livewire\Concerns\ScopesToUser`: **admin** e **manager** enxergam os dados de
+toda a equipe; **sales** enxerga (e altera) apenas os registros em que é o `user_id` responsável —
+tentativas fora do escopo retornam `403`. Só o **admin** acessa a gestão de usuários.
+
+---
+
+## Banco de dados
+
+### Migrations
+
+```
+0001_01_01_000000_create_users_table.php          users (+ role), password_reset_tokens, sessions
+0001_01_01_000001_create_cache_table.php          cache, cache_locks
+0001_01_01_000002_create_jobs_table.php           jobs, job_batches, failed_jobs
+2026_06_18_100000_create_customers_table.php      customers
+2026_06_18_100100_create_deals_table.php          deals
+2026_06_18_100200_create_interactions_table.php   interactions
+```
+
+As tabelas do CRM usam `cascadeOnDelete` (excluir um cliente remove seus negócios e interações;
+excluir um usuário remove sua carteira) e índices compostos em `user_id`, `customer_id` e `stage`
+com `created_at`, que são as colunas usadas pelo dashboard e pelas listagens.
+
+### Seeders
+
+| Seeder            | O que faz                                                              |
+|-------------------|------------------------------------------------------------------------|
+| `UserSeeder`      | Os 4 usuários da tabela acima (idempotente, usa `firstOrCreate`)        |
+| `CrmDemoSeeder`   | Base de demonstração: 40 clientes, 1–4 negócios e 1–5 interações cada   |
+| `DatabaseSeeder`  | Chama os dois e imprime um resumo dos totais                           |
+
+Os dados de demonstração são gerados por factories (`CustomerFactory`, `DealFactory`,
+`InteractionFactory`) e distribuídos ao longo dos últimos 12 meses, para os gráficos ficarem
+populados. O volume é configurável:
+
+```bash
+SEED_CUSTOMERS=200 php artisan migrate:fresh --seed
+```
+
+---
+
+## Testes
+
+```bash
+php artisan test
+```
+
+Cobrem CRUD de clientes, negócios e interações, o escopo por perfil (403), os KPIs e exportações do
+dashboard, a gestão de usuários, os seeders e a autenticação/perfil que vieram do Breeze.
+
+---
+
+## Estrutura
+
+```
+app/
+  Livewire/            Dashboard, CustomerList, CustomerForm, CustomerShow, UserManagement
+  Livewire/Concerns/   ScopesToUser (visibilidade por perfil)
+  Models/              User, Customer, Deal, Interaction
+resources/
+  css/app.css          design system em @layer components (.card, .btn-*, .input, .badge-*, .table)
+  views/livewire/      telas do CRM
+tailwind.config.js     paleta "brand" e fonte Figtree
+database/
+  factories/ migrations/ seeders/
+tests/
+  Feature/ Unit/
+```
+
+O CSS concentra os padrões visuais em classes de componente (`.card`, `.btn-primary`, `.input`,
+`.badge-green`, `.table`…), então as views ficam curtas e uma mudança de estilo acontece em um
+lugar só — inclusive nos componentes do Breeze (`resources/views/components`), que foram
+realinhados a esse mesmo design system.
 
 ---
 
 ## Licença
 
-Este projeto está sob a licença [MIT](LICENSE).
+MIT.

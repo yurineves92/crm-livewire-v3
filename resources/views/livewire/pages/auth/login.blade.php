@@ -36,12 +36,12 @@ new #[Layout('layouts.guest')] class extends Component
 
         <div class="flex items-center justify-between">
             <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">Lembrar de mim</span>
+                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500" name="remember">
+                <span class="ms-2 text-sm text-slate-600">Lembrar de mim</span>
             </label>
         </div>
 
-        <x-primary-button class="w-full justify-center py-3 bg-blue-600 hover:bg-blue-700">
+        <x-primary-button class="w-full py-2.5">
             Entrar na Plataforma
         </x-primary-button>
     </form>

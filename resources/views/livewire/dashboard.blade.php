@@ -1,183 +1,152 @@
-<div class="py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+<div class="page">
+    <div class="page-container">
 
         {{-- Cabeçalho --}}
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
-                <p class="text-sm text-gray-500 mt-1">
-                    Olá, <span class="font-semibold text-gray-700">{{ auth()->user()->name }}</span>!
-                    Perfil:
-                    <span @class([ 'inline-block px-2 py-0.5 text-xs font-bold rounded-full uppercase' , 'bg-red-100 text-red-700'=> auth()->user()->role === 'admin',
-                        'bg-yellow-100 text-yellow-700' => auth()->user()->role === 'manager',
-                        'bg-blue-100 text-blue-700' => auth()->user()->role === 'sales',
-                        ])>
+                <h1 class="page-title">Dashboard</h1>
+                <p class="text-sm text-slate-500 mt-1">
+                    Olá, <span class="font-semibold text-slate-700">{{ auth()->user()->name }}</span>!
+                    <span @class([
+                        'badge ml-1 uppercase',
+                        'badge-rose' => auth()->user()->role === 'admin',
+                        'badge-amber' => auth()->user()->role === 'manager',
+                        'badge-blue' => auth()->user()->role === 'sales',
+                    ])>
                         {{ auth()->user()->role }}
                     </span>
                 </p>
             </div>
+
             <div class="flex flex-wrap items-center gap-2">
-                {{-- Filtro de período --}}
-                <select wire:model.live="period"
-                    class="rounded-lg border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 py-2">
-                    <option value="7days">Últimos 7 dias</option>
-                    <option value="30days">Últimos 30 dias</option>
-                    <option value="3months">Últimos 3 meses</option>
-                    <option value="6months">Últimos 6 meses</option>
-                    <option value="1year">Último ano</option>
+                <select wire:model.live="period" class="select w-auto py-2">
+                    @foreach (\App\Livewire\Dashboard::PERIODS as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
                 </select>
 
-                {{-- Exportar --}}
-                <button wire:click="exportCustomers"
-                    class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2">
-                    ⬇ Clientes CSV
-                </button>
-                <button wire:click="exportDeals"
-                    class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2">
-                    ⬇ Negócios CSV
-                </button>
+                <button wire:click="exportCustomers" class="btn-secondary">Clientes CSV</button>
+                <button wire:click="exportDeals" class="btn-secondary">Negócios CSV</button>
 
-                <a href="{{ route('customers.create') }}" wire:navigate
-                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-                    + Novo Cliente
-                </a>
+                <a href="{{ route('customers.create') }}" wire:navigate class="btn-primary">+ Novo Cliente</a>
             </div>
         </div>
 
-        {{-- Cards KPI --}}
+        {{-- KPIs --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between min-h-[120px]">
-                <p class="text-sm text-gray-500 font-medium">Novos Clientes</p>
-                <p class="text-3xl font-black text-blue-600 mt-2 truncate">{{ $totalCustomers }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between min-h-[120px]">
-                <p class="text-sm text-gray-500 font-medium">Negócios no Período</p>
-                <p class="text-3xl font-black text-purple-600 mt-2 truncate">{{ $totalDeals }}</p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between min-h-[120px]">
-                <p class="text-sm text-gray-500 font-medium">Pipeline Ativo</p>
-                <p class="text-xl font-black text-yellow-500 mt-2 break-words leading-tight">
-                    R$ {{ number_format($pipeline, 2, ',', '.') }}
-                </p>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between min-h-[120px]">
-                <p class="text-sm text-gray-500 font-medium">Fechados (Ganhos)</p>
-                <p class="text-xl font-black text-green-600 mt-2 break-words leading-tight">
-                    R$ {{ number_format($closedWon, 2, ',', '.') }}
-                </p>
-            </div>
+            @php
+                $kpis = [
+                    ['label' => 'Novos Clientes', 'value' => number_format($totalCustomers, 0, ',', '.'), 'accent' => 'text-brand-600'],
+                    ['label' => 'Negócios no Período', 'value' => number_format($totalDeals, 0, ',', '.'), 'accent' => 'text-violet-600'],
+                    ['label' => 'Pipeline Ativo', 'value' => 'R$ ' . number_format($pipeline, 2, ',', '.'), 'accent' => 'text-amber-500'],
+                    ['label' => 'Fechados (Ganhos)', 'value' => 'R$ ' . number_format($closedWon, 2, ',', '.'), 'accent' => 'text-emerald-600'],
+                ];
+            @endphp
+
+            @foreach ($kpis as $kpi)
+                <div class="card p-6 flex flex-col justify-between min-h-[116px]">
+                    <p class="text-sm font-medium text-slate-500">{{ $kpi['label'] }}</p>
+                    <p class="mt-2 text-2xl font-extrabold leading-tight break-words {{ $kpi['accent'] }}">
+                        {{ $kpi['value'] }}
+                    </p>
+                </div>
+            @endforeach
         </div>
 
-        {{-- Aviso de escopo --}}
-        @if(auth()->user()->role === 'sales')
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
-            📌 Você está visualizando apenas seus próprios clientes e negócios.
+        {{-- Escopo de visualização --}}
+        <div @class([
+            'rounded-xl border p-4 text-sm',
+            'bg-brand-50 border-brand-200 text-brand-800' => auth()->user()->isSales(),
+            'bg-amber-50 border-amber-200 text-amber-800' => ! auth()->user()->isSales(),
+        ])>
+            @if (auth()->user()->isSales())
+                Você está visualizando apenas seus próprios clientes e negócios.
+            @else
+                Você está visualizando os dados de <span class="font-bold">toda a equipe</span>.
+            @endif
         </div>
-        @else
-        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-700">
-            👁️ Você está visualizando os dados de <span class="font-bold">toda a equipe</span>.
-        </div>
-        @endif
 
         {{-- Gráficos --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {{-- Gráfico de barras — Receita mensal (últimos 12 meses) --}}
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-base font-bold text-gray-700 mb-4">Receita Fechada — Últimos 12 Meses</h3>
+            <div class="lg:col-span-2 card p-6">
+                <h2 class="card-title mb-4">Receita Fechada — Últimos 12 Meses</h2>
                 <div wire:ignore>
                     <canvas id="chartBar" height="120"></canvas>
                 </div>
             </div>
 
-            {{-- Gráfico de rosca — Negócios por estágio --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="text-base font-bold text-gray-700 mb-4">Negócios por Estágio</h3>
+            <div class="card p-6">
+                <h2 class="card-title mb-4">Negócios por Estágio</h2>
                 <div wire:ignore>
                     <canvas id="chartDoughnut" height="200"></canvas>
                 </div>
-                {{-- Legenda manual --}}
-                <ul class="mt-4 space-y-1 text-xs text-gray-600">
-                    @foreach($stageData as $label => $count)
-                    <li class="flex justify-between">
-                        <span>{{ $label }}</span>
-                        <span class="font-bold">{{ $count }}</span>
-                    </li>
+                <ul class="mt-4 space-y-1 text-xs text-slate-600">
+                    @foreach ($stageData as $label => $count)
+                        <li class="flex justify-between">
+                            <span>{{ $label }}</span>
+                            <span class="font-bold">{{ $count }}</span>
+                        </li>
                     @endforeach
                 </ul>
             </div>
-
         </div>
 
     </div>
+
+    @assets
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    @endassets
+
+    @script
+        <script>
+            const palette = ['#3b6df6', '#eab308', '#f97316', '#22c55e', '#ef4444'];
+
+            const renderCharts = ({ monthLabels, monthValues, stageData }) => {
+                ['chartBar', 'chartDoughnut'].forEach((id) => Chart.getChart(id)?.destroy());
+
+                new Chart(document.getElementById('chartBar'), {
+                    type: 'bar',
+                    data: {
+                        labels: monthLabels,
+                        datasets: [{
+                            label: 'Receita Fechada (R$)',
+                            data: monthValues,
+                            backgroundColor: 'rgba(59, 109, 246, 0.75)',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { ticks: { callback: (value) => 'R$ ' + value.toLocaleString('pt-BR') } },
+                        },
+                    },
+                });
+
+                new Chart(document.getElementById('chartDoughnut'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(stageData),
+                        datasets: [{
+                            data: Object.values(stageData),
+                            backgroundColor: palette,
+                            borderWidth: 2,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        cutout: '65%',
+                    },
+                });
+            };
+
+            renderCharts(@json(['monthLabels' => $monthLabels, 'monthValues' => $monthValues, 'stageData' => $stageData]));
+
+            // O filtro de período redesenha os gráficos (os canvases usam wire:ignore).
+            $wire.on('charts-refreshed', (payload) => renderCharts(Array.isArray(payload) ? payload[0] : payload));
+        </script>
+    @endscript
 </div>
-
-{{-- Chart.js --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-    const monthLabels = @json($monthLabels);
-    const monthValues = @json($monthValues);
-    const stageLabels = @json(array_keys($stageData));
-    const stageCounts = @json(array_values($stageData));
-
-    function initCharts() {
-        // Destroi instâncias anteriores se existirem
-        ['chartBar', 'chartDoughnut'].forEach(id => {
-            const existing = Chart.getChart(id);
-            if (existing) existing.destroy();
-        });
-
-        new Chart(document.getElementById('chartBar'), {
-            type: 'bar',
-            data: {
-                labels: monthLabels,
-                datasets: [{
-                    label: 'Receita Fechada (R$)',
-                    data: monthValues,
-                    backgroundColor: 'rgba(37, 99, 235, 0.7)',
-                    borderRadius: 6,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        ticks: {
-                            callback: val => 'R$ ' + val.toLocaleString('pt-BR')
-                        }
-                    }
-                }
-            }
-        });
-
-        new Chart(document.getElementById('chartDoughnut'), {
-            type: 'doughnut',
-            data: {
-                labels: stageLabels,
-                datasets: [{
-                    data: stageCounts,
-                    backgroundColor: ['#3B82F6', '#EAB308', '#F97316', '#22C55E', '#EF4444'],
-                    borderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                cutout: '65%',
-            }
-        });
-    }
-
-    // Roda no carregamento normal E após wire:navigate
-    document.addEventListener('livewire:navigated', initCharts);
-</script>
