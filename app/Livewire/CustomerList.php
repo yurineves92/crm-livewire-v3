@@ -2,17 +2,19 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ScopesToUser;
 use App\Models\Customer;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class CustomerList extends Component
 {
-    use WithPagination;
+    use ScopesToUser, WithPagination;
 
+    #[Url(except: '')]
     public string $search = '';
 
-    // Reseta para página 1 ao buscar
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -20,30 +22,23 @@ class CustomerList extends Component
 
     public function delete(int $id): void
     {
-        $user = auth()->user();
         $customer = Customer::findOrFail($id);
 
-        if ($user->role === 'sales' && $customer->user_id !== $user->id) {
-            abort(403);
-        }
+        $this->authorizeOwnership($customer);
 
         $customer->delete();
+
+        $this->dispatch('notify', message: 'Cliente excluído com sucesso.');
     }
 
     public function render()
     {
-        $user = auth()->user();
-
-        $customers = Customer::query()
-            ->when($user->role === 'sales', fn($q) => $q->where('user_id', $user->id))
-            ->where(
-                fn($q) => $q
-                    ->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%')
-            )
-            ->latest()
-            ->paginate(15);
-
-        return view('livewire.customer-list', compact('customers'));
+        return view('livewire.customer-list', [
+            'customers' => $this->scoped(Customer::class)
+                ->search($this->search)
+                ->withCount('deals')
+                ->latest()
+                ->paginate(15),
+        ]);
     }
 }

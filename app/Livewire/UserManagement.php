@@ -3,7 +3,8 @@
 namespace App\Livewire;
 
 use App\Models\User;
-use Livewire\Attributes\Validate;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -14,30 +15,40 @@ class UserManagement extends Component
     public ?int $editingUserId = null;
     public bool $showForm = false;
 
-    #[Validate('required|min:3')]
     public string $name = '';
-
-    #[Validate('required|email')]
     public string $email = '';
-
-    #[Validate('nullable|min:8')]
     public string $password = '';
+    public string $role = User::ROLE_SALES;
 
-    #[Validate('required|in:admin,manager,sales')]
-    public string $role = 'sales';
-
+    #[Url(except: '')]
     public string $search = '';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->isAdmin(), 403);
+    }
 
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function mount(): void
+    /**
+     * @return array<string, mixed>
+     */
+    protected function rules(): array
     {
-        if (auth()->user()->role !== 'admin') {
-            abort(403);
-        }
+        return [
+            'name'  => ['required', 'string', 'min:3', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($this->editingUserId),
+            ],
+            'password' => [$this->editingUserId ? 'nullable' : 'required', 'string', 'min:8'],
+            'role'     => ['required', Rule::in(array_keys(User::ROLES))],
+        ];
     }
 
     public function openCreate(): void
@@ -50,50 +61,27 @@ class UserManagement extends Component
     {
         $user = User::findOrFail($id);
 
-        $this->editingUserId = $id;
+        $this->editingUserId = $user->id;
         $this->name          = $user->name;
         $this->email         = $user->email;
         $this->password      = '';
         $this->role          = $user->role;
         $this->showForm      = true;
+        $this->resetValidation();
     }
 
     public function save(): void
     {
-        $emailRule = $this->editingUserId
-            ? 'required|email|unique:users,email,' . $this->editingUserId
-            : 'required|email|unique:users,email';
+        $data = $this->validate();
 
-        $passwordRule = $this->editingUserId
-            ? 'nullable|min:8'
-            : 'required|min:8';
-
-        $this->validate([
-            'name'     => 'required|min:3',
-            'email'    => $emailRule,
-            'password' => $passwordRule,
-            'role'     => 'required|in:admin,manager,sales',
-        ]);
+        if ($this->password === '') {
+            unset($data['password']);
+        }
 
         if ($this->editingUserId) {
-            $data = [
-                'name'  => $this->name,
-                'email' => $this->email,
-                'role'  => $this->role,
-            ];
-
-            if ($this->password) {
-                $data['password'] = bcrypt($this->password);
-            }
-
             User::findOrFail($this->editingUserId)->update($data);
         } else {
-            User::create([
-                'name'     => $this->name,
-                'email'    => $this->email,
-                'password' => bcrypt($this->password),
-                'role'     => $this->role,
-            ]);
+            User::create($data);
         }
 
         $this->resetForm();
@@ -115,23 +103,20 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->editingUserId = null;
-        $this->showForm      = false;
-        $this->name          = '';
-        $this->email         = '';
-        $this->password      = '';
-        $this->role          = 'sales';
+        $this->reset('editingUserId', 'showForm', 'name', 'email', 'password', 'role');
         $this->resetValidation();
     }
 
     public function render()
     {
-        $users = User::query()
-            ->when($this->search, fn($q) => $q->where('name', 'like', "%{$this->search}%")
-                ->orWhere('email', 'like', "%{$this->search}%"))
-            ->latest()
-            ->paginate(10);
-
-        return view('livewire.user-management', compact('users'));
+        return view('livewire.user-management', [
+            'users' => User::query()
+                ->when($this->search, fn ($query) => $query->where(
+                    fn ($q) => $q->where('name', 'like', "%{$this->search}%")
+                        ->orWhere('email', 'like', "%{$this->search}%")
+                ))
+                ->latest()
+                ->paginate(10),
+        ]);
     }
 }
